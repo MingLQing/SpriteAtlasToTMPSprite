@@ -1,0 +1,26 @@
+{
+  "name": "com.minglqing.spriteatlas2tmpsprite",
+  "version": "1.0.0",
+  "displayName": "SpriteAtlas To TMP_Sprite",
+  "description": "Unity SpriteAtlas To TMP_Sprite Tools",
+  "keywords": [
+    "tmp",
+    "textmeshpro",
+    "sprite",
+    "atlas",
+    "spriteatlas",
+    "tmpsprite"
+  ],
+  "dependencies": {
+    "com.unity.textmeshpro": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MingLQing/SpriteAtlasToTMPSprite.git"
+  },
+  "author": {
+    "name": "MingLQing",
+    "email": "g769044495@gmail.com",
+    "url": "https://github.com/MingLQing"
+  }
+}
