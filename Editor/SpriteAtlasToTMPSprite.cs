@@ -234,7 +234,7 @@ namespace MingLQing.SpriteAtlasToTMPSprite
             addDefaultMaterialMethod.Invoke(null, new object[] { spriteAsset });
 
             EditorUtility.SetDirty(spriteAsset);
-            AssetDatabase.SaveAssetIfDirty(spriteAsset);
+            AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
     }
