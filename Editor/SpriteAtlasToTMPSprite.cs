@@ -118,7 +118,7 @@ namespace MingLQing.SpriteAtlasToTMPSprite
                 return;
             }
 
-#if UNITY_2021_1_OR_NEWER
+#if UNITY_2022_1_OR_NEWER
             string atlasPath = AssetDatabase.GetAssetPath(atlas);
             bool isV2 = Path.GetExtension(atlasPath).EndsWith("v2");
 
@@ -174,7 +174,7 @@ namespace MingLQing.SpriteAtlasToTMPSprite
             SpriteAtlasUtility.PackAtlases(new SpriteAtlas[] { atlas }, EditorUserBuildSettings.activeBuildTarget, false);
         }
 
-#if UNITY_2021_1_OR_NEWER
+#if UNITY_2022_1_OR_NEWER
         private static void InnerSpriteAtlasToTMPSpriteV2(SpriteAtlas atlas)
         {
             string atlasPath = AssetDatabase.GetAssetPath(atlas);
