@@ -8,7 +8,7 @@ Instructions:
 
 If you encounter the error "ArgumentException: Could not get atlas data - Sprite is not packed.", simply run the project once, then retry the operation to resolve it
 
-Tip: Spriet Atlas V2 (Experimental) not supported
+Tip: Support Sprite Atlas V2 (experimental version not supported)
 
 
 使用说明：
@@ -18,4 +18,4 @@ Tip: Spriet Atlas V2 (Experimental) not supported
 
 如果出现 "ArgumentException: Could not get atlas data - Sprite is not packed." 的报错，只需要运行一次项目，再重新执行操作即可解决。
 
-Tips: 不支持 Spriet Atlas V2 (Experimental)
+Tips: 支持 Spriet Atlas V2 (实验性版本不支持)
