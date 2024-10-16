@@ -70,11 +70,69 @@ namespace MingLQing.SpriteAtlasToTMPSprite
 
         public static void SpriteAtlasToTMPSprite(SpriteAtlas atlas)
         {
-            if (atlas == null || atlas.spriteCount <= 0)
+            if (atlas == null)
+            {
+                Debug.LogError("Sprite Atlas is null.");
+                return;
+            }
+
+            Shader shader = Shader.Find("TextMeshPro/Sprite");
+            if (shader == null)
+            {
+                Debug.LogError("Please import TMP Essentials.");
+                return;
+            }
+
+#if UNITY_2020_1_OR_NEWER
+            if (EditorSettings.spritePackerMode != SpritePackerMode.AlwaysOnAtlas && EditorSettings.spritePackerMode != SpritePackerMode.SpriteAtlasV2)
+#else
+            if (EditorSettings.spritePackerMode != SpritePackerMode.AlwaysOnAtlas)
+#endif
+            {
+                Debug.LogError("Sprite Packer Mode is not always enabled.");
+                return;
+            }
+
+#if UNITY_2020_1_OR_NEWER
+            string atlasPath = AssetDatabase.GetAssetPath(atlas);
+            bool isV2 = Path.GetExtension(atlasPath).EndsWith("v2");
+
+#if UNITY_2020
+            if (isV2)
+            {
+                Debug.LogError("Sprite Packer Mode is Experimental.");
+                return;
+            }
+#endif
+
+            if ((isV2 && EditorSettings.spritePackerMode != SpritePackerMode.SpriteAtlasV2) || (!isV2 && EditorSettings.spritePackerMode != SpritePackerMode.AlwaysOnAtlas))
+            {
+                Debug.LogError("Sprite Atlas version error. Please change Sprite Packer Mode.");
+                return;
+            }
+#endif
+
+            SpriteAtlasUtility.PackAtlases(new SpriteAtlas[] { atlas }, EditorUserBuildSettings.activeBuildTarget, false);
+            if (atlas.spriteCount <= 0)
             {
                 return;
             }
 
+#if UNITY_2021_1_OR_NEWER
+            string atlasPath = AssetDatabase.GetAssetPath(atlas);
+            bool isV2 = Path.GetExtension(atlasPath).EndsWith("v2");
+
+            if (isV2)
+                InnerSpriteAtlasToTMPSpriteV2(atlas);
+            else
+                InnerSpriteAtlasToTMPSpriteV1(atlas);
+#else
+            InnerSpriteAtlasToTMPSpriteV1(atlas);
+#endif
+        }
+
+        private static void InnerSpriteAtlasToTMPSpriteV1(SpriteAtlas atlas)
+        {
             // temporary settings
             TextureImporterPlatformSettings platformSettings = atlas.GetPlatformSettings(ActivePlatforName);
             bool backupOverridden = platformSettings.overridden;
@@ -116,16 +174,83 @@ namespace MingLQing.SpriteAtlasToTMPSprite
             SpriteAtlasUtility.PackAtlases(new SpriteAtlas[] { atlas }, EditorUserBuildSettings.activeBuildTarget, false);
         }
 
+#if UNITY_2021_1_OR_NEWER
+        private static void InnerSpriteAtlasToTMPSpriteV2(SpriteAtlas atlas)
+        {
+            string atlasPath = AssetDatabase.GetAssetPath(atlas);
+
+            AssetDatabase.StartAssetEditing();
+
+            SpriteAtlasImporter spriteAtlasImporter = (SpriteAtlasImporter)AssetImporter.GetAtPath(atlasPath);
+
+            TextureImporterPlatformSettings platformSettings = spriteAtlasImporter.GetPlatformSettings(ActivePlatforName);
+            bool backupOverridden = platformSettings.overridden;
+            platformSettings.overridden = false;
+            spriteAtlasImporter.SetPlatformSettings(platformSettings);
+
+            TextureImporterPlatformSettings defaultPlatformSettings = spriteAtlasImporter.GetPlatformSettings(GetPlatforName(BuildTarget.NoTarget));
+            TextureImporterFormat backupFormat = defaultPlatformSettings.format;
+            defaultPlatformSettings.format = TextureImporterFormat.RGBA32;
+            spriteAtlasImporter.SetPlatformSettings(defaultPlatformSettings);
+
+            SpriteAtlasTextureSettings textureSetting = spriteAtlasImporter.textureSettings;
+            SpriteAtlasTextureSettings backupTextureSetting = textureSetting;
+            textureSetting.readable = true;
+            spriteAtlasImporter.textureSettings = textureSetting;
+
+            SpriteAtlasPackingSettings packingSettings = spriteAtlasImporter.packingSettings;
+            SpriteAtlasPackingSettings backupPackingSettings = packingSettings;
+            packingSettings.enableRotation = false;
+            packingSettings.enableTightPacking = false;
+            spriteAtlasImporter.packingSettings = packingSettings;
+
+            AssetDatabase.WriteImportSettingsIfDirty(atlasPath);
+            AssetDatabase.StopAssetEditing();
+            AssetDatabase.Refresh();
+
+            SpriteAtlasUtility.PackAtlases(new SpriteAtlas[] { atlas }, EditorUserBuildSettings.activeBuildTarget, false);
+
+            // export png
+            ExportSpriteAtlasTexture(atlas);
+            ExportSpriteAsset(atlas);
+
+            // reset settings
+            AssetDatabase.StartAssetEditing();
+
+            platformSettings.overridden = backupOverridden;
+            spriteAtlasImporter.SetPlatformSettings(platformSettings);
+
+            defaultPlatformSettings.format = backupFormat;
+            spriteAtlasImporter.SetPlatformSettings(defaultPlatformSettings);
+
+            spriteAtlasImporter.textureSettings = backupTextureSetting;
+            spriteAtlasImporter.packingSettings = backupPackingSettings;
+
+            SpriteAtlasUtility.PackAtlases(new SpriteAtlas[] { atlas }, EditorUserBuildSettings.activeBuildTarget, false);
+
+            AssetDatabase.WriteImportSettingsIfDirty(atlasPath);
+            AssetDatabase.StopAssetEditing();
+            AssetDatabase.Refresh();
+        }
+#endif
+
         private static string GetTexturePath(SpriteAtlas atlas)
         {
             string atlasPath = AssetDatabase.GetAssetPath(atlas);
-            return atlasPath.Replace(".spriteatlas", ".png");
+            return ReplaceExtension(atlasPath, ".png");
         }
 
         private static string GetAssetPath(SpriteAtlas atlas)
         {
             string atlasPath = AssetDatabase.GetAssetPath(atlas);
-            return atlasPath.Replace(".spriteatlas", ".asset");
+            string extension = Path.GetExtension(atlasPath);
+            return ReplaceExtension(atlasPath, ".asset");
+        }
+
+        private static string ReplaceExtension(string path, string newExtension)
+        {
+            string extension = Path.GetExtension(path);
+            return path.Replace(extension, newExtension);
         }
 
         private static void ExportSpriteAtlasTexture(SpriteAtlas atlas)
